@@ -94,7 +94,7 @@ describe('GET /digest/:night', () => {
   it('lists jobs in the same order as the JSON', async () => {
     const jobs = (await api('2026-01-01')).rows.map((r) => r.job);
     const html = await (await app.request('/digest/2026-01-01')).text();
-    const positions = jobs.map((j) => html.indexOf(`>${j}<`));
+    const positions = jobs.map((j) => html.indexOf(`${j}</td>`));
     expect(positions.every((p) => p >= 0)).toBe(true);
     expect([...positions].sort((a, b) => a - b)).toEqual(positions);
   });
