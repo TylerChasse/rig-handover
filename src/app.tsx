@@ -7,6 +7,8 @@ import { Layout } from './views/layout.js';
 import { DigestPage } from './views/digest.js';
 import { StatusBoard } from './views/status.js';
 
+const NIGHT_ID = /^\d{4}-\d{2}-\d{2}$/;
+
 export function createApp(config: RigConfig = loadConfig()) {
   const app = new Hono();
 
@@ -20,9 +22,18 @@ export function createApp(config: RigConfig = loadConfig()) {
     ),
   );
 
+  // One code path for page and JSON, so they can never disagree.
+  const loadNight = (id: string) => (NIGHT_ID.test(id) ? readNight(config.runsDir, id) : null);
+
+  app.get('/api/digest/:night', (c) => {
+    const night = loadNight(c.req.param('night'));
+    if (!night) return c.json({ error: 'no such night' }, 404);
+    return c.json({ night: night.night, rows: night.rows, badLines: night.badLines });
+  });
+
   app.get('/digest/:night', (c) => {
     const id = c.req.param('night');
-    const night = /^\d{4}-\d{2}-\d{2}$/.test(id) ? readNight(config.runsDir, id) : null;
+    const night = loadNight(id);
     if (!night) {
       return c.html(
         <Layout title="not found" lane={lane()}>
